@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ORKG KG Evolution Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 30px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f2f2f2;
+      text-align: left;
+    }
+
+    tr:hover {
+      background: #f9f9f9;
+    }
+
+    a {
+      color: #0366d6;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>ORKG Knowledge Graph Evolution</h2>
+<canvas id="kgChart" width="1000" height="400"></canvas>
+
+<h2>ORKG Versions</h2>
+<table id="versionsTable">
+  <thead>
+    <tr>
+      <th>Version</th>
+      <th>Triples</th>
+      <th>Size (bytes)</th>
+      <th>Download</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+
+// ---------- ENDPOINTS ----------
+const mossEndpoint = "https://moss.dev.dbpedia.link/sparql";
+const databusEndpoint = "https://databus.dbpedia.org/sparql";
+
+// ---------- SPARQL: TRIPLES ----------
+const queryTriples = `
+PREFIX void: <http://rdfs.org/ns/void#>
+SELECT ?version ?triples WHERE {
+  ?version void:triples ?triples .
+  FILTER(STRSTARTS(STR(?version),
+    "https://databus.dbpedia.org/knowledge-graph-catalog/orkg/orkg-daily-dump/"))
+}
+`;
+
+// ---------- SPARQL: SIZE + DOWNLOAD ----------
+const queryDistributions = `
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX databus: <https://dataid.dbpedia.org/databus#>
+
+SELECT ?version ?size ?downloadURL WHERE {
+  ?version databus:artifact <https://databus.dbpedia.org/knowledge-graph-catalog/orkg/orkg-daily-dump> .
+  ?version dcat:distribution ?dist .
+  ?dist dcat:byteSize ?size .
+  ?dist dcat:downloadURL ?downloadURL .
+}
+`;
+
+// ---------- FETCH TRIPLES ----------
+async function fetchTriples() {
+  const url = mossEndpoint + "?query=" + encodeURIComponent(queryTriples) + "&format=json";
+  const res = await fetch(url);
+  const data = await res.json();
+
+  return data.results.bindings.map(r => {
+    const version = r.version.value.split("/").pop();
+    return {
+      version,
+      triples: parseInt(r.triples.value)
+    };
+  });
+}
+
+// ---------- FETCH SIZE + DOWNLOAD ----------
+async function fetchVersions() {
+  const url = databusEndpoint + "?query=" + encodeURIComponent(queryDistributions) + "&format=json";
+  const res = await fetch(url);
+  const data = await res.json();
+
+  return data.results.bindings.map(r => {
+    const version = r.version.value.split("/").pop();
+    return {
+      version,
+      size: parseInt(r.size.value),
+      downloadURL: r.downloadURL.value
+    };
+  });
+}
+
+// ---------- SORT (ascending = oldest → newest) ----------
+function sortAsc(data) {
+  return data.sort((a, b) =>
+    new Date(a.version.replace(/\./g, "-")) -
+    new Date(b.version.replace(/\./g, "-"))
+  );
+}
+
+// ---------- MERGE DATASETS ----------
+function merge(triples, versions) {
+  const map = new Map();
+
+  triples.forEach(d => {
+    map.set(d.version, { version: d.version, triples: d.triples });
+  });
+
+  versions.forEach(d => {
+    if (!map.has(d.version)) {
+      map.set(d.version, { version: d.version });
+    }
+    map.get(d.version).size = d.size;
+    map.get(d.version).downloadURL = d.downloadURL;
+  });
+
+  return Array.from(map.values());
+}
+
+// ---------- CHART (oldest → newest) ----------
+function renderChart(data) {
+  const labels = data.map(d => d.version);
+  const values = data.map(d => d.triples);
+
+  new Chart(document.getElementById("kgChart"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Triples",
+        data: values,
+        tension: 0.15
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          title: { display: true, text: "Version" }
+        },
+        y: {
+          min: 4540000,
+          max: 4770000,
+          title: { display: true, text: "Triples" }
+        }
+      }
+    }
+  });
+}
+
+// ---------- TABLE (newest → oldest) ----------
+function renderTable(data) {
+  const tbody = document.querySelector("#versionsTable tbody");
+  tbody.innerHTML = "";
+
+  data.forEach(d => {
+    const databusURL = `https://databus.dbpedia.org/knowledge-graph-catalog/orkg/orkg-daily-dump/${d.version}`;
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${d.version} - <a href="${databusURL}" target="_blank">
+          find out more on the DBpedia Databus
+        </a></td>
+      <td>${d.triples?.toLocaleString() ?? "-"}</td>
+      <td>${d.size?.toLocaleString() ?? "-"}</td>
+      <td>
+        ${d.downloadURL ? `<a href="${d.downloadURL}" target="_blank">download</a>` : "-"}
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- INIT ----------
+async function init() {
+  const [triples, versions] = await Promise.all([
+    fetchTriples(),
+    fetchVersions()
+  ]);
+
+  const merged = merge(triples, versions);
+
+  // chart: oldest → newest
+  const chronological = sortAsc([...merged]);
+
+  renderChart(chronological);
+
+  // table: newest → oldest
+  renderTable([...chronological].reverse());
+}
+
+init();
+
+</script>
+
+</body>
+</html>
