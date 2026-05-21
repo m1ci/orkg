@@ -429,9 +429,14 @@
     // LOAD HELLO WORLD MODULE (TEST)
     // ---------------------------------------------
     import helloWorld from "https://m1ci.github.io/kg-modules/kg-hello-world/index.js";
+    import kgEvolution from "https://m1ci.github.io/kg-modules/kg-evolution/index.js";
 
     helloWorld(
-      document.getElementById("helloModule"),
+      document.getElementById("helloWorld"),
+      context
+    );
+    kgEvolution(
+      document.getElementById("kgEvolution"),
       context
     );
 
@@ -449,11 +454,12 @@
 
     // evolution module (you will replace later)
     
+/*
     loadModule(
       "https://m1ci.github.io/kg-modules/kg-evolution/index.js",
       document.getElementById("kgEvolutionModule")
     );
-
+*/
 
     // versions module (future)
 /*    
