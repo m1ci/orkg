@@ -309,6 +309,11 @@
         KG Evolution Module
       </button>
 
+      <button class="tab-button"
+              onclick="openTab(event, 'kgVersionsTab')">
+        KG Versons
+      </button>
+
     </div>
 
     <!-- =====================================
@@ -393,6 +398,13 @@
       <div id="kgEvolutionModule"></div>
     </div>
 
+    <!-- =====================================
+         TAB 5 : KG Versions module
+    ====================================== -->
+
+    <div id="kgVersionsTab" class="tab-content">
+      <div id="kgVersionsModule"></div>
+    </div>
 
   </div>
 
@@ -422,7 +434,8 @@
       kgId: "orkg",
       kgName: "ORKG",
       moss_endpoint: "https://moss.dev.dbpedia.link/sparql",
-      databus_endpoint: "https://databus.dbpedia.org/sparql"
+      databus_endpoint: "https://databus.dbpedia.org/sparql",
+      artifact: "https://databus.dbpedia.org/knowledge-graph-catalog/orkg/orkg-daily-dump"
     };
 
     // ---------------------------------------------
@@ -462,6 +475,11 @@
     loadModule(
       "https://m1ci.github.io/kg-modules/kg-evolution/index.js",
       document.getElementById("kgEvolutionModule")
+    );
+
+    loadModule(
+      "https://m1ci.github.io/kg-modules/kg-versions/index.js",
+      document.getElementById("kgVersionsModule")
     );
 
     // versions module (future)
