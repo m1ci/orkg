@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ORKG Knowledge Graph Portal</title>
+
+  <link rel="stylesheet" href="./css/styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+  <!-- =====================================
+       HERO SECTION
+  ====================================== -->
+
+  <section class="hero">
+
+    <div class="hero-content">
+
+      <h1>ORKG Knowledge Graph</h1>
+
+      <p id="kgAbstract">
+        Loading description for the knowledge graph ...
+      </p>
+      <p>
+      FIRST PROTOTYPE FOR DBPEDIA OPEN KG PROJECT PAGES
+      </p>
+
+      <div class="hero-badges">
+        <div class="badge">Semantic Web</div>
+        <div class="badge">Knowledge Graphs</div>
+        <div class="badge">Open Science</div>
+        <div class="badge">Linked Data</div>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- =====================================
+       MAIN CONTENT
+  ====================================== -->
+
+  <div class="container">
+
+    <!-- =====================================
+         INFO CARDS
+    ====================================== -->
+
+    <div class="cards">
+
+      <div class="card">
+        <h3>KG Evolution</h3>
+        <p>
+          Explore the growth of the ORKG through longitudinal statistics
+          and versioned snapshots of the knowledge graph.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Version Archive</h3>
+        <p>
+          Browse downloadable releases published on DBpedia Databus,
+          including metadata and dataset distributions.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Research Infrastructure</h3>
+        <p>
+          ORKG enables machine-readable scholarly communication and supports
+          FAIR knowledge publishing practices.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- =====================================
+         TABS
+    ====================================== -->
+
+    <div class="tabs">
+
+      <button class="tab-button"
+              onclick="openTab(event, 'kgEvolutionTab')">
+        KG Evolution Module
+      </button>
+
+      <button class="tab-button"
+              onclick="openTab(event, 'kgVersionsTab')">
+        KG Versons
+      </button>
+
+      <button class="tab-button"
+              onclick="openTab(event, 'helloTab')">
+        Hello World Module
+      </button>
+
+      <!--
+          New KG/Tab: add a button for your new tab 
+      -->
+      <button class="tab-button"
+              onclick="openTab(event, 'newTab')">
+        ... other module
+      </button>
+
+    </div>
+
+
+    <!-- =====================================
+         TAB 1 : KG Evolution module
+    ====================================== -->
+
+    <div id="kgEvolutionTab" class="tab-content active" >
+      <div id="kgEvolutionModule"></div>
+    </div>
+
+    <!-- =====================================
+         TAB 2 : KG Versions module
+    ====================================== -->
+
+    <div id="kgVersionsTab" class="tab-content">
+      <div id="kgVersionsModule"></div>
+    </div>
+
+    <!-- =====================================
+         TAB 3 : Hello World TAB
+    ====================================== -->
+
+    <div id="helloTab" class="tab-content">
+      <h2>Hello World Module</h2>
+      <div id="helloModule"></div>
+    </div>
+
+    <!-- =====================================
+         TAB 4 : NEW TAB
+    ====================================== -->
+
+    <!--
+        New KG/Tab: Add div for your new module
+    -->
+    <div id="newTab" class="tab-content">
+
+      <h2>New Feature</h2>
+
+      <p class="section-description">
+        Feature description ....
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= CORE SCRIPT ================= -->
+  <script type="module">
+
+    // ---------------------------------------------
+    // TAB SYSTEM
+    // ---------------------------------------------
+    window.openTab = function(evt, tabId) {
+      document.querySelectorAll(".tab-content")
+        .forEach(t => t.classList.remove("active"));
+
+      document.querySelectorAll(".tab-button")
+        .forEach(b => b.classList.remove("active"));
+
+      document.getElementById(tabId).classList.add("active");
+      evt.currentTarget.classList.add("active");
+    };
+
+    // ---------------------------------------------
+    // KG CONTEXT
+    // ---------------------------------------------
+    const context = {
+      kgId: "orkg",
+      kgName: "ORKG",
+      moss_endpoint: "https://moss.dev.dbpedia.link/sparql",
+      databus_endpoint: "https://databus.dbpedia.org/sparql",
+      artifact: "https://databus.dbpedia.org/knowledge-graph-catalog/orkg/orkg-daily-dump"
+    };
+
+    const databusEndpoint = context.databus_endpoint;
+
+    // ---------------------------------------------
+    // FETCH ABSTRACT
+    // ---------------------------------------------
+    const queryAbstract = `
+      PREFIX dct: <http://purl.org/dc/terms/>
+
+      SELECT ?abstract WHERE {
+        <https://databus.dbpedia.org/knowledge-graph-catalog/${context.kgId}>
+          dct:abstract ?abstract .
+      }
+    `;
+
+    async function fetchAbstract() {
+
+      const url =
+        databusEndpoint +
+        "?query=" +
+        encodeURIComponent(queryAbstract) +
+        "&format=json";
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data?.results?.bindings?.length > 0) {
+        return data.results.bindings[0].abstract.value;
+      }
+
+      return "No description available.";
+    }
+
+    // ---------------------------------------------
+    // MODULE LOADER
+    // ---------------------------------------------
+    async function loadModule(url, el) {
+      const mod = await import(url);
+      mod.default(el, context);
+    }
+
+    loadModule(
+      "https://m1ci.github.io/kg-modules/kg-evolution/index.js",
+      document.getElementById("kgEvolutionModule")
+    );
+
+    loadModule(
+      "https://m1ci.github.io/kg-modules/kg-versions/index.js",
+      document.getElementById("kgVersionsModule")
+    );
+
+    // New KG/Tab: load your new module
+    loadModule(
+      "https://m1ci.github.io/kg-modules/kg-hello-world/index.js",
+      document.getElementById("helloModule")
+    );
+
+    // ---------------------------------------------
+    // INIT ON PAGE LOAD
+    // ---------------------------------------------
+    document.addEventListener("DOMContentLoaded", async () => {
+
+      // -------------------------
+      // DEFAULT TAB FIX
+      // -------------------------
+      // New KG/Tab: update default tab
+      const defaultTabId = "kgEvolutionTab";
+
+      const defaultButton = Array.from(document.querySelectorAll(".tab-button"))
+        .find(btn => btn.getAttribute("onclick")?.includes(defaultTabId));
+
+      if (defaultButton) {
+        window.openTab({ currentTarget: defaultButton }, defaultTabId);
+      }
+
+      // -------------------------
+      // LOAD ABSTRACT
+      // -------------------------
+      const el = document.getElementById("kgAbstract");
+
+      try {
+        const abstract = await fetchAbstract();
+        el.textContent = abstract;
+      } catch (e) {
+        el.textContent = "Failed to load description.";
+        console.error(e);
+      }
+    });
+
+  </script>
+
+</body>
+</html>
