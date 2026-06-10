@@ -23,10 +23,10 @@
       <h1>ORKG Knowledge Graph</h1>
 
       <p id="kgAbstract">
-        Loading description for the knowledge graph ...
+        The Open Research Knowledge Graph is an open knowledge graph that structures scientific papers into machine-readable representations. Instead of only storing metadata, it captures research elements like methods, datasets, and results. This enables easier comparison, reuse, and exploration of scientific knowledge across publications.
       </p>
       <p>
-      FIRST PROTOTYPE FOR DBPEDIA OPEN KG PROJECT PAGES
+        <i>Note: this is a first prototype of the DBpedia Knowledge Graph Cards</i>
       </p>
 
       <div class="hero-badges">
@@ -260,15 +260,15 @@
       // -------------------------
       // LOAD ABSTRACT
       // -------------------------
-      const el = document.getElementById("kgAbstract");
-
-      try {
-        const abstract = await fetchAbstract();
-        el.textContent = abstract;
-      } catch (e) {
-        el.textContent = "Failed to load description.";
-        console.error(e);
-      }
+//      const el = document.getElementById("kgAbstract");
+//
+//      try {
+//        const abstract = await fetchAbstract();
+//        el.textContent = abstract;
+//      } catch (e) {
+//        el.textContent = "Failed to load description.";
+//        console.error(e);
+//      }
     });
 
   </script>
