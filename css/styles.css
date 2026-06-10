@@ -20,7 +20,7 @@ body {
 }
 
 .hero-content {
-  max-width: 950px;
+  max-width: none;
 }
 
 .hero h1 {
